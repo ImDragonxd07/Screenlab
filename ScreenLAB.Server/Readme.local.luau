@@ -1,0 +1,1 @@
+-- The ScreenLab.Server folder should be dragged and dropped into ServerScriptService, then right click the folder and "Enable Scripts"
