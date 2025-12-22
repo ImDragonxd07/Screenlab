@@ -43,7 +43,6 @@ function component.New()
 	end
 
 	self.Remove = function(spritedata) -- ONLY USED BY ENGINE. Create new func for user use
-		print("Object is being destroyed and unregistered")
 		self.Settings.Register = false
 	end
 	
