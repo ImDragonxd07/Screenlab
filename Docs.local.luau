@@ -1,4 +1,5 @@
--- NEW DOCS AT https://screenlab.gitbook.io/screenlab
+-- NEW DOCS AT https://screenlab.gitbook.io/screenlab, these docs are outdated and should not be used
+
 
 --[[
 	ScreenLAB is a engine made for making 2D games in the roblox 3d engine

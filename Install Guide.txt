@@ -1,0 +1,2 @@
+1. Drag and drop the rbxm file into ReplicatedStorage
+2. Drag and drop ScreenLAB.Server into ServerScriptStorage
