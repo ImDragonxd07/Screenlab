@@ -1,4 +1,4 @@
-![Logo](https://raw.githubusercontent.com/ImDragonxd07/Screenlab/refs/heads/main/screenlablogo.png)
+![Logo](https://github.com/ImDragonxd07/Screenlab/blob/main/screenlablogo.png)
 
 # Screenlab
 **A powerful, open-source, GUI-based 2D game engine for Roblox**
