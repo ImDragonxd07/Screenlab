@@ -1,6 +1,6 @@
 <div align="center">
  <a href="https://screenlab.gitbook.io/screenlab">
-   <img height="128" alt="Screenlab" src="https://github.com/ImDragonxd07/Screenlab/blob/main/screenlablogo.png">
+   <img height="128" alt="Screenlab" src="https://github.com/ImDragonxd07/Screenlab/blob/main/screenlab banner.png">
  </a>
  <h1>Screenlab</h1>
 
