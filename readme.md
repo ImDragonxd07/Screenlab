@@ -1,8 +1,7 @@
 <div align="center">
  <a href="https://screenlab.gitbook.io/screenlab">
-   <img height="128" alt="Screenlab" src="https://github.com/ImDragonxd07/Screenlab/blob/main/screenlab banner.png">
+   <img height="256" alt="Screenlab" src="https://github.com/ImDragonxd07/Screenlab/blob/main/screenlab banner.png">
  </a>
- <h1>Screenlab</h1>
 
 **A powerful, open-source, GUI-based 2D game engine for Roblox**
 
