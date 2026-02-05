@@ -1,66 +1,68 @@
 name: Update Code Stats
 
-# Run manually or weekly
 on:
   schedule:
-    - cron: '0 0 * * 0' # every Sunday at 00:00 UTC
-  workflow_dispatch:      # allows manual run
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+# Add this - required for pushing
+permissions:
+  contents: write
 
 jobs:
   stats:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout your repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # 2️⃣ Install Tokei (correct way)
-      - name: Install tokei
+      - name: Install dependencies
         run: |
-          # Download the latest Tokei binary for Linux x86_64
+          # Install jq for JSON parsing
+          sudo apt-get update
+          sudo apt-get install -y jq
+          
+          # Install tokei
           curl -L https://github.com/XAMPPRocky/tokei/releases/latest/download/tokei-x86_64-unknown-linux-gnu.tar.gz \
             -o tokei.tar.gz
           tar xzf tokei.tar.gz
           sudo mv tokei /usr/local/bin/
-          # Verify installation
           tokei --version
 
-      # 3️⃣ Generate stats (LOC & file count)
       - name: Generate stats
         run: |
-          # Generate JSON output
           tokei --output json > tokei.json
-
-          # Count total files
-          FILES=$(jq '[.[] | .reports | length] | add' tokei.json)
-          # Count total lines of code
-          CODE=$(jq '[.[] | .code] | add' tokei.json)
-
-          # Compose markdown block
-          STATS="## 📊 Project Stats
+          
+          # Get stats with fallback to 0 if null
+          FILES=$(jq '[.[] | .reports | length] | add // 0' tokei.json)
+          CODE=$(jq '[.[] | .code] | add // 0' tokei.json)
+          
+          # Create stats block
+          cat > stats.txt << EOF
+          ## 📊 Project Stats
           - Files: ${FILES}
-          - Lines of Code: ${CODE}"
-
-          # Replace the placeholder block in README.md
-          awk -v stats="$STATS" '
-            BEGIN {inblock=0}
-            /<!-- STATS_START -->/ {print; print stats; inblock=1; next}
-            /<!-- STATS_END -->/ {inblock=0}
-            !inblock
+          - Lines of Code: ${CODE}
+          EOF
+          
+          # Replace content between markers
+          awk '
+            /<!-- STATS_START -->/ {print; system("cat stats.txt"); f=1; next}
+            /<!-- STATS_END -->/ {f=0}
+            !f
           ' README.md > README.tmp
           mv README.tmp README.md
 
-      # 4️⃣ Commit changes if README updated
       - name: Commit changes
         run: |
-          # Only commit if README.md changed
-          if git diff --quiet; then
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git config user.name "github-actions"
-            git config user.email "github-actions@github.com"
-            git add README.md
-            git commit -m "chore: update code stats"
+            git commit -m "chore: update code stats [skip ci]"
             git push
           fi
