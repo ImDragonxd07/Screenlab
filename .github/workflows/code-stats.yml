@@ -27,11 +27,10 @@ jobs:
           CODE=$(jq '[.[] | .code | tonumber] | add // 0' tokei.json)
           COMMENTS=$(jq '[.[] | .comments | tonumber] | add // 0' tokei.json)
           
-          # Get current date
-          UPDATED=$(date -u +"%B %d, %Y")
+          # Get current date and replace spaces with %20 for URL
+          UPDATED=$(date -u +"%B %d, %Y" | sed 's/ /%20/g')
           
           cat > stats.txt << EOF 
-
           <div align="center">
           
           ![Files](https://img.shields.io/badge/Files-${FILES}-blue?style=for-the-badge&logo=files)
