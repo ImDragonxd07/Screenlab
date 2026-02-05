@@ -7,7 +7,6 @@
 
 Screenlab is a fully modular gui based 2D game engine built from scratch for Roblox, designed to give developers maximum flexibility and control over their games.
 
-## 📊 Project Stats
 <!-- STATS_START -->
 ## 📊 Project Stats
 - Files: 50
