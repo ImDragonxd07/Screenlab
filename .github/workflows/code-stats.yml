@@ -17,11 +17,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install tokei
-        run: |
-          wget https://github.com/XAMPPRocky/tokei/releases/download/v13.0.0-alpha.5/tokei-x86_64-unknown-linux-gnu.tar.gz
-          tar xzf tokei-x86_64-unknown-linux-gnu.tar.gz
-          sudo mv tokei /usr/local/bin/
-          tokei --version
+        run: cargo install tokei --locked
 
       - name: Generate stats
         run: |
