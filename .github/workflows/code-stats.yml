@@ -40,7 +40,7 @@ jobs:
           # Compose markdown block
           STATS="## 📊 Project Stats
           - Files: ${FILES}
-         - Lines of Code: ${CODE}"
+          - Lines of Code: ${CODE}"
 
           # Replace the placeholder block in README.md
           awk -v stats="$STATS" '
