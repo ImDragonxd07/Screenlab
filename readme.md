@@ -8,9 +8,33 @@
 Screenlab is a fully modular gui based 2D game engine built from scratch for Roblox, designed to give developers maximum flexibility and control over their games.
 
 <!-- STATS_START -->
-## 📊 Project Stats
-- Files: 50
-- Lines of Code: 12654
+## 📊 Project Statistics
+
+<div align="center">
+
+![Files](https://img.shields.io/badge/Files-50-blue?style=for-the-badge&logo=files)
+![Lines of Code](https://img.shields.io/badge/Lines_of_Code-12654-green?style=for-the-badge&logo=codelines)
+![Comments](https://img.shields.io/badge/Comments-4504-yellow?style=for-the-badge&logo=comment)
+![Blank Lines](https://img.shields.io/badge/Blank_Lines-2298-lightgrey?style=for-the-badge)
+
+</div>
+
+---
+
+<table align="center">
+<tr>
+<td align="center"><b>📁 Total Files</b></td>
+<td align="center"><b>💻 Lines of Code</b></td>
+<td align="center"><b>💬 Comments</b></td>
+<td align="center"><b>⬜ Blank Lines</b></td>
+</tr>
+<tr>
+<td align="center"><code>50</code></td>
+<td align="center"><code>12654</code></td>
+<td align="center"><code>4504</code></td>
+<td align="center"><code>2298</code></td>
+</tr>
+</table>
 <!-- STATS_END -->
 
 > ⚠️ **Note:** Screenlab is under active development. Some features may be incomplete, experimental, or subject to change without notice. GitHub repo does not include Roblox specific objects and does not work with just the code alone.
