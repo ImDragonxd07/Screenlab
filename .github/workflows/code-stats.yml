@@ -1,0 +1,51 @@
+name: Update Code Stats
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # once a week (Sunday)
+  workflow_dispatch:
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install tokei
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tokei
+
+      - name: Generate stats
+        run: |
+          tokei --output json > tokei.json
+
+          FILES=$(jq '[.[] | .reports | length] | add' tokei.json)
+          CODE=$(jq '[.[] | .code] | add' tokei.json)
+
+          STATS="## 📊 Project Stats
+          - Files: ${FILES}
+          - Lines of Code: ${CODE}"
+
+          awk -v stats="$STATS" '
+            BEGIN {inblock=0}
+            /<!-- STATS_START -->/ {print; print stats; inblock=1; next}
+            /<!-- STATS_END -->/ {inblock=0}
+            !inblock
+          ' README.md > README.tmp
+
+          mv README.tmp README.md
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes"
+          else
+            git config user.name "github-actions"
+            git config user.email "github-actions@github.com"
+            git add README.md
+            git commit -m "chore: update code stats"
+            git push
+          fi
