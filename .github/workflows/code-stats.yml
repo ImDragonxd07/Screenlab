@@ -1,47 +1,62 @@
 name: Update Code Stats
 
+# Run manually or weekly
 on:
   schedule:
-    - cron: '0 0 * * 0' # once a week (Sunday)
-  workflow_dispatch:
+    - cron: '0 0 * * 0' # every Sunday at 00:00 UTC
+  workflow_dispatch:      # allows manual run
 
 jobs:
   stats:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout your repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # 2️⃣ Install Tokei (correct way)
       - name: Install tokei
         run: |
-          sudo apt-get update
-          sudo apt-get install -y tokei
+          # Download the latest Tokei binary for Linux x86_64
+          curl -L https://github.com/XAMPPRocky/tokei/releases/latest/download/tokei-x86_64-unknown-linux-gnu.tar.gz \
+            -o tokei.tar.gz
+          tar xzf tokei.tar.gz
+          sudo mv tokei /usr/local/bin/
+          # Verify installation
+          tokei --version
 
+      # 3️⃣ Generate stats (LOC & file count)
       - name: Generate stats
         run: |
+          # Generate JSON output
           tokei --output json > tokei.json
 
+          # Count total files
           FILES=$(jq '[.[] | .reports | length] | add' tokei.json)
+          # Count total lines of code
           CODE=$(jq '[.[] | .code] | add' tokei.json)
 
+          # Compose markdown block
           STATS="## 📊 Project Stats
           - Files: ${FILES}
-          - Lines of Code: ${CODE}"
+         - Lines of Code: ${CODE}"
 
+          # Replace the placeholder block in README.md
           awk -v stats="$STATS" '
             BEGIN {inblock=0}
             /<!-- STATS_START -->/ {print; print stats; inblock=1; next}
             /<!-- STATS_END -->/ {inblock=0}
             !inblock
           ' README.md > README.tmp
-
           mv README.tmp README.md
 
+      # 4️⃣ Commit changes if README updated
       - name: Commit changes
         run: |
+          # Only commit if README.md changed
           if git diff --quiet; then
-            echo "No changes"
+            echo "No changes to commit"
           else
             git config user.name "github-actions"
             git config user.email "github-actions@github.com"
