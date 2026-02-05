@@ -44,7 +44,7 @@ jobs:
           
           </div>
           EOF
-          
+        
           awk '
             /<!-- STATS_START -->/ {print; system("cat stats.txt"); f=1; next}
             /<!-- STATS_END -->/ {f=0}
