@@ -1,9 +1,9 @@
 name: Update Code Stats
 
 on:
-  schedule:
-    - cron: '0 0 * * 0'
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -26,25 +26,22 @@ jobs:
           FILES=$(jq '[.[] | .reports | length] | add // 0' tokei.json)
           CODE=$(jq '[.[] | .code | tonumber] | add // 0' tokei.json)
           COMMENTS=$(jq '[.[] | .comments | tonumber] | add // 0' tokei.json)
-          BLANKS=$(jq '[.[] | .blanks | tonumber] | add // 0' tokei.json)
           
-          # Format numbers with commas
-          FILES_FMT=$(printf "%'d" $FILES)
-          CODE_FMT=$(printf "%'d" $CODE)
-          COMMENTS_FMT=$(printf "%'d" $COMMENTS)
-          BLANKS_FMT=$(printf "%'d" $BLANKS)
+          # Get current date
+          UPDATED=$(date -u +"%B %d, %Y")
           
           cat > stats.txt << EOF 
+
           <div align="center">
           
           ![Files](https://img.shields.io/badge/Files-${FILES}-blue?style=for-the-badge&logo=files)
           ![Lines of Code](https://img.shields.io/badge/Lines_of_Code-${CODE}-green?style=for-the-badge&logo=codelines)
           ![Comments](https://img.shields.io/badge/Comments-${COMMENTS}-yellow?style=for-the-badge&logo=comment)
-          ![Blank Lines](https://img.shields.io/badge/Blank_Lines-${BLANKS}-lightgrey?style=for-the-badge)
+          ![Last Updated](https://img.shields.io/badge/Last_Updated-${UPDATED}-purple?style=for-the-badge&logo=calendar)
           
           </div>
           EOF
-        
+          
           awk '
             /<!-- STATS_START -->/ {print; system("cat stats.txt"); f=1; next}
             /<!-- STATS_END -->/ {f=0}
