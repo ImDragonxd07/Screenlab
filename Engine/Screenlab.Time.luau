@@ -1,5 +1,6 @@
+local using = require(script.Parent.Using)
 local module = {}
-local GlobalEvent = require(script.Parent["Screenlab.GlobalEvent"])
+local GlobalEvent = using("Screenlab.GlobalEvent")
 
 local deltatime = 0 
 

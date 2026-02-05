@@ -1,5 +1,6 @@
+local using = require(script.Parent.Using)
 local module = {}
-local engine = require(game.ReplicatedStorage.ScreenLAB.ScreenlabCore)
+local engine = using("ScreenlabCore")
 
 local function newvec(x, y)
 	return {x = x, y = y}

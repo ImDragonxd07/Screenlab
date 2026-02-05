@@ -1,6 +1,10 @@
+local using = require(script.Parent.Using)
+
 local module = {}
+
+
 local Types = require(script.Parent.Editor["Screenlab.Types"])
-local Events = require(script.Parent["Screenlab.Event"])
+local Events = using("Screenlab.Event")
 local ContextActionService = game:GetService("ContextActionService")
 
 

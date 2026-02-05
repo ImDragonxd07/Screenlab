@@ -1,5 +1,7 @@
-local Event = require(script.Parent["Screenlab.Event"])
+local using = require(script.Parent.Using)
 local module = {}
+
+local Event = using("Screenlab.Event")
 
 module.Events = {
 	NewObj = Event:New(),

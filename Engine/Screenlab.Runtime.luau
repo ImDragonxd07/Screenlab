@@ -1,8 +1,10 @@
+local using = require(script.Parent.Using)
+
 local module = {}
 
-local Compiler = require(script.Parent.Dependencies["Screenlab.Extern.Compiler"])
 
-local Engine = require(script.Parent.Parent.ScreenlabCore)
+local Compiler = using("Screenlab.Extern.Compiler")
+local Engine = using("ScreenlabCore")
 
 module.Execute = function(str)
 	if not script.Parent.Parent.Settings.AllowRuntimeCodeExecution.Value then

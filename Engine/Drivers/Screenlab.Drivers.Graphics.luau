@@ -1,8 +1,8 @@
+local using = require(script.Parent.Parent.Using)
 local module = {}
-
-local Engine = require(script.Parent.Parent.Parent.ScreenlabCore)
-local Camera = require(script.Parent.Parent["Screenlab.Camera"])
-local Delaunay = require(script.Parent.Parent.Dependencies["Screenlab.Extern.Delaunay"])
+local Engine = using("ScreenlabCore")
+local Camera = using("Screenlab.Camera")
+local Delaunay = using("Screenlab.Extern.Delaunay")
 
 module.Settings = {
 	DbgPolys = false,

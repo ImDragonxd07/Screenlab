@@ -1,6 +1,8 @@
+local using = require(script.Parent.Using)
+
 local module = {}
 
-
+local Engine = using("ScreenlabCore")
 
 module.CurrentCamera = {
 	Position = {
@@ -15,7 +17,6 @@ module.CurrentCamera = {
 
 function module:SetPosition(pos)
 	local VPSize = workspace.CurrentCamera.ViewportSize
-	local Engine = require(script.Parent.Parent.ScreenlabCore)
 	local newpos = UDim2.fromOffset(pos.X, pos.Y)
 	module.CurrentCamera.Position.udim2 = newpos
 	module.CurrentCamera.Position.vector2 = Vector2.new(newpos.X.Offset,newpos.Y.Offset)
@@ -23,7 +24,6 @@ function module:SetPosition(pos)
 end
 
 function module:SetScale(scale)
-	local Engine = require(script.Parent.Parent.ScreenlabCore)
 	local newsize = UDim2.fromScale(scale.X,scale.Y)
 	module.CurrentCamera.Size.udim2 = newsize
 	module.CurrentCamera.Size.vector2 = scale
@@ -36,9 +36,5 @@ function module:TweenCamera(playerPos, speed)
 	local newPos = currentPos:Lerp(playerPos, followSpeed)
 	module:SetPosition(newPos)
 end
-
-
-
-
 
 return module

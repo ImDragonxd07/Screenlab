@@ -1,4 +1,4 @@
 print("payload called")
-require(script.Parent.ScreenLabCore)
+error("")
 return function()
 end

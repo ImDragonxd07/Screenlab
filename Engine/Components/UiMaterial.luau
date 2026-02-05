@@ -1,3 +1,4 @@
+local using = require(script.Parent.Parent.Using)
 local component = {}
 component.Max = 1
 
@@ -6,7 +7,7 @@ function component.New()
 	local self = setmetatable({}, component) 
 	
 	local sprite = nil
-	local renderer = require(script.Parent.Parent.Dependencies["Screenlab.Extern.UiMaterial"])
+	local renderer = using("Screenlab.Extern.UiMaterial")
 
 	self.SetMaterial = function(RobloxMaterial)
 		if sprite then

@@ -1,10 +1,10 @@
-local PhysicsEngine = require(script.Parent.Engine["Screenlab.Physics"])
-local Hooking = require(script.Parent.Engine["Screenlab.Hooking"])
-local Types = require(script.Parent.Engine.Editor["Screenlab.Types"])
-local GlobalEvents = require(script.Parent.Engine["Screenlab.GlobalEvent"])
-local Time = require(script.Parent.Engine["Screenlab.Time"])
+local using = require(script.Parent.Engine.Using)
 local module = {}
 
+local Hooking = using("Screenlab.Hooking")
+local Types = using("Screenlab.Types")
+local GlobalEvents = using("Screenlab.GlobalEvent")
+local Time = using("Screenlab.Time")
 
 local ErrCodes = {
 	ERR_INVALID_PLAYER = "ERR_INVALID_PLAYER",
@@ -19,19 +19,17 @@ local ErrCodes = {
 }
 
 -- SCREENLAB INTERNAL
-local VERSION = "1.0 BETA"
+local VERSION = "1.1 BETA"
 local LOADED = false
 local function GetPlayerScreenGUI(Player)
 	return Player:WaitForChild('PlayerGui')
 end
 
-
-
-
 local function err(code)
 	local targetScript, originLevel
+	local baselevel = 2
 	pcall(function()
-		local level = 2
+		local level = baselevel
 		while level < 100 do
 			local success, env = pcall(getfenv, level)
 			if not success or not env then break end
@@ -52,16 +50,18 @@ local function err(code)
 		"╔══════════════════════════════════════════════╗",
 		"            🛠️  SCREENLAB ERROR REPORTER       ",
 		"╚══════════════════════════════════════════════╝",
+		" • Time           : " .. os.date("%Y-%m-%d %H:%M:%S"),
 		" • Error Name     : " .. tostring(code),
 		" • Error Code #   : " .. errorIndex,
 		" • Origin Script  : " .. (targetScript and targetScript:GetFullName() or "Unknown"),
-		" • Stack Level    : " .. tostring(originLevel or "N/A"),
+		" • Stack Level    : " .. tostring(originLevel or "N/A") .. " (+"..baselevel..")", --+2 because we ignore first 2 layers as they would just be this function but still show this for debugging reasons
 		"════════════════════ TRACEBACK ════════════════════",
 		traceback,
 		"═══════════════════════════════════════════════════",
+		"All errors are treated as non fatal",
 		"\n"
 	} 
-	error(table.concat(lines, "\n"))
+	warn(table.concat(lines, "\n"))
 	return code
 end
 
@@ -145,43 +145,46 @@ end
 
 function module.Sprite.new(properties) : Types.Sprite
 	properties = properties or {}
-	
-	
 	local self = setmetatable({}, module.Sprite) 
-	
-	
-	-- PROPERTIES
-	local ObjectHooks = {}
-	local Object =  properties.Object or (properties.Object == nil and nil)
-	self.Components = properties.Components or (properties.Components == nil and {}) 
-	self.Space = module.Space.World
-	self.ReadOnly = {
-		UniqueId = GenerateID()
+
+	-- 1. INTERNAL DATA 
+	local _Methods = {
+		VirtualPosition = Vector2.new(0,0),
+		VirtualSize = Vector2.new(0,0),
+		Position = UDim2.new(0,0,0,0),
+		Size = UDim2.new(0,0,0,0),
+		Space = properties.Space or module.Space.World,
+		Components = properties.Components or {}
 	}
-	table.freeze(self.ReadOnly)
+	local Object = properties.Object
 
-	
-	-- FUNCTIONS
-	
-	local function CanScriptGetObj(env)
-		return env.script:IsDescendantOf(script.Parent)
-	end
+	-- 2. SECURED/EXPOSED FUNCTIONS
+	self["[SECURED]_Object"] = function() return Object end
+	self["[SECURED]_GetObject"] = function() return Object end
+	self["[SECURED]_Methods"] = _Methods
 
-	local CreateFunctionHook = function(name,scr,func)
-		table.insert(ObjectHooks,{name,scr,func})
-	end
-	
-	self.GetObject =function(ins)
-		if CanScriptGetObj(getfenv(2)) then
-			return Object
+	self.ReadOnly = table.freeze({
+		UniqueId = GenerateID()
+	})
+
+	self.GetComponentsByType = function(typeName)
+		local found = {}
+		for _, comp in ipairs(_Methods.Components) do
+			if comp.ScreenLabComponentInstance == typeName then
+				table.insert(found, comp)
+			end
 		end
-		warn("Objects cannot be accesed through external functions")
-		return  self.GetObject
-	end	
-	self.SetParent = function(sprite)
-		Object.Parent = sprite.GetObject()
+		return found
 	end
-	function self.AddComponent( componentinst, properties)
+
+	self["[EXPOSED]_SetParent"] = function(sprite)
+		local target = sprite.GetObject() 
+		if target and Object then
+			Object.Parent = target
+		end
+	end
+
+	self["[EXPOSED]_AddComponent"] = function(componentinst, properties)
 		if typeof(componentinst) == "Instance" then
 			componentinst.Parent = Object
 			if properties then
@@ -189,182 +192,102 @@ function module.Sprite.new(properties) : Types.Sprite
 					componentinst[prop] = value
 				end
 			end
-			--return err(ErrCodes.ERR_COMPONENT_NOT_FOUND) --ROBLOX COMPONENT
-			--local rblxcomponent = Instance.new(componentname)
-			--rblxcomponent.Parent = Object
-			--return rblxcomponent
 			return componentinst
 		else			
-			local inst = script.Parent.Engine.Components:FindFirstChild(componentinst);
-				local req = require(inst)
-				if req.Max then
-				if #self.GetComponentsByType(componentinst) + 1 > req.Max then
-						return err(ErrCodes.ERR_MAX_COMPONENT_TYPE_REACHED)
-					end
-				end
+			local inst = script.Parent.Engine.Components:FindFirstChild(componentinst)
+			if not inst then return warn("Component not found: " .. tostring(componentinst)) end
 
+			local req = require(inst)
 			local component = req.New()
 			component["ScreenLabComponentInstance"] = inst.Name
-			component.Add(self,module.playerData)
-			Hooking.CreateHook(component,"Remove",self.RemoveComponent,component)
-			table.insert(self.Components,component)
+			component.Add(self, module.playerData)
+			table.insert(_Methods.Components, component) -- Store in _Methods
 			return component
-
 		end
 	end
-	
-	self.SetSpace = function(Space : Types.Space)
+
+	self["[EXPOSED]_SetSpace"] = function(Space)
 		if Space == module.Space.Screen then
 			Object.Parent = module.playerData.CameraSpace
 		elseif Space == module.Space.World then
 			Object.Parent = module.playerData.ScreenLabWindow.Sprites
-		else
-			return err(ErrCodes.ERR_INVALID_SPACE)
 		end
-		self.Space = Space
+		_Methods.Space = Space
 	end
-	
-	self.GetSpace = function()
-		return self.Space
-	end
-	
-	self.GetComponentsByType = function(name)
-		local components = {}
-		for i,v in pairs(self.Components) do
-			if v["ScreenLabComponentInstance"] == name then
-				table.insert(components,v)
 
-			end
-		end
-		return components
-	
-	end
-	
-	self.RemoveComponent = function(componentinstance) -- pass require(script component here) ex. Requre(script)
-		if table.find(self.Components,componentinstance) then
-			Hooking.RemoveHook(componentinstance,"Remove")
-			componentinstance.Remove(self)
-			table.remove(self.Components,table.find(self.Components,componentinstance))
-		else
-			return err(ErrCodes.ERR_COMPONENT_NOT_FOUND)
-		end
-
-	end
-	-- REGISTER
-	local tblpos = #module.Sprites + 1
-	module.Sprites[tblpos] = self
-
-	
-	self.REGISTER = function()
-		if not module.playerData.ScreenLabWindow then
-			return err(ErrCodes.ERR_GET_WINDOW)
-		end
-		if not self.Object then
+	self["[SECURED]_REGISTER"] = function()
+		if not Object then
 			local obj = Instance.new("Frame")
 			obj.Position = UDim2.new(0,0,0,0)
 			obj.Size = UDim2.new(0.1,0,0.1,0)
 			obj.BorderSizePixel = 0
 			Object = obj
 		end
+
 		Object.Destroying:Connect(function()
-			local components = table.clone(self.Components)
-			for i,v in pairs(components) do
-				self.RemoveComponent(v)
-			end
-			module.Sprites[tblpos] = nil
+			local idx = table.find(module.Sprites, self)
+			if idx then table.remove(module.Sprites, idx) end
 			setmetatable(self, nil)
-			table.clear(self)
-			table.freeze(self)
 		end)
-		self.SetSpace(module.Space.World)
-		--if self.Simulate or not self.Static then
-		--	PhysicsEngine.RegisterSprite(self)
-		--end
-		for i,v in pairs(self.Components) do
-			self.AddComponent("",v)
-		end
-		
 
-		
-		
+		---- Initial Sync
+		--_Methods.VirtualPosition = Transform.ToVirtual(Object.Position)
+		--_Methods.VirtualSize = Transform.ToVirtual(Object.Size)
+		--_Methods.Position = Object.Position
+		--_Methods.Size = Object.Size
+
+		self["[EXPOSED]_SetSpace"](module.Space.World)
 	end
 
-
-	self.REGISTER()
-	
-	local InternalFuncs = {
-		["Object"] = function() return Object end,
-		["CreateFunctionHook"] = CreateFunctionHook,
-	} 
-	
-	function self:Service(serviceName)
-		local service = game:GetService(serviceName)
-		local tbl = {}
-		function tbl:Send(...)
-			local args = table.pack(...)
-			local name = args[1]
-			for i, v in ipairs(args) do
-				if type(v) == "table" and v["GetObject"] then
-					args[i] = v["GetObject"]()
-				end
-			end
-			table.remove(args,1)
-			local ret= service[name](service,table.unpack(args))
-			return ret
-		end
-		return tbl
-	end
-	
-		
-	-- Metamethods
 	setmetatable(self, {
-		__newindex = function(ttbl, key, value)
-			local override = false
-			if Object[key] then
-				for i,v in pairs(ObjectHooks) do
-					local hookvarname = v[1]
-					local scr = v[2]
-					local callbackfunc = v[3]
-					if not require(scr)[callbackfunc](value) then
-						override = true
-					end
-				end
-
-			end
-			if not override then
-				Object[key] = value
-				return Object[key]
-			end
-		end, 
 		__index = function(t, key)
-			if InternalFuncs[key] then
-				if CanScriptGetObj(getfenv(2)) then
-					return function(...)
-						return InternalFuncs[key](...)
-					end
-				else
-					warn("Cannot call engine funcs from game scripts (" .. key..")")
-					return nil
-				end
-			end
-			if typeof(Object[key]) == "function" then
-				if Object[key] then
-					return function(self, ...)
-						return Object[key](Object, ...) 
-					end				
-				end
-			else
+			local tag = rawget(t, "[SECURED]_"..key) or rawget(t, "[EXPOSED]_"..key)
+			if tag then return tag end
+			local localVal = rawget(t, key)
+			if localVal ~= nil then return localVal end
+			if Object then
 				return Object[key]
+			end
+			if _Methods[key] ~= nil then
+				return _Methods[key]
+			end
+		end,
+		__newindex = function(t, key, value)
+			if key:sub(1,1) == "[" or key == "ReadOnly" then
+				rawset(t, key, value)
+				return
+			end
+
+			if Object then
+				--if key == "VirtualPosition" then
+				--	local s = Transform.ToScreen(value)
+				--	_Methods.VirtualPosition, _Methods.Position = value, s
+				--	Object.Position = s
+				--	return
+				--elseif key == "VirtualSize" then
+				--	local s = Transform.ToScreenSize(value)
+				--	_Methods.VirtualSize, _Methods.Size = value, s
+				--	Object.Size = s
+				--	return
+				--elseif key == "Position" then
+				--	_Methods.Position, Object.Position = value, value
+				--	_Methods.VirtualPosition = Transform.ToVirtual(value)
+				--	return
+				--elseif key == "Size" then
+				--	_Methods.Size, Object.Size = value, value
+				--	_Methods.VirtualSize = Transform.ToVirtualSize(value)
+				--	return
+				--end
+				pcall(function() Object[key] = value end)
+			else
+				_Methods[key] = value
 			end
 		end
-	}) 
-	
-	
-	GlobalEvents.Events.NewObj:Fire(self)
-	
+	})
+
+	self["[SECURED]_REGISTER"]()
 	return self
 end
-
 
 
 module.CoreUI ={
@@ -415,7 +338,7 @@ module.RegisterPlayer = function (Player)
 		if introshown == false then
 			local intro = script.Parent.Assets.Intro:Clone()
 			intro.Parent = screengui
-			require(intro.Frame.LoadManager).show(VERSION,script.Parent, game:GetService("RunService"):IsStudio() and not script.Parent.Settings.ShowIntroInStudio.Value)
+			require(intro.Frame.LoadManager).show(module,VERSION,script.Parent, game:GetService("RunService"):IsStudio() and not script.Parent.Settings.ShowIntroInStudio.Value)
 			introshown = true
 		else
 			local provider = game:GetService("ContentProvider")
@@ -474,9 +397,10 @@ function module:CreateScene(name, func)
 			table.insert(SceneSprites, sprite)
 			return sprite
 		end
-		local success, err = pcall(scene.Code, scene)
+		local success, sceneerror = pcall(scene.Code, scene)
 		if not success then
-			warn("Error loading scene:", err)
+			warn("Error loading scene:", sceneerror)
+			err("Unknown")
 		end
 		module.Sprite.new = originalSpriteNew
 	end

@@ -1,4 +1,6 @@
 --https://www.redblobgames.com/articles/visibility/
+local using = require(script.Parent.Using)
+
 local module = {}
 local lights = {}
 
@@ -7,13 +9,10 @@ module.Settings = {
 	RaycastStep = 2,
 }
 
-
-local ray  = require(script.Parent["Screenlab.Raycast"])
-
-local engine = require(game.ReplicatedStorage.ScreenLAB.ScreenlabCore)
-local Graphics = require(script.Parent.Drivers["Screenlab.Drivers.Graphics"])
-local GlobalEvents = require(script.Parent["Screenlab.GlobalEvent"])
-local Point    = Graphics.Delaunay.Point
+local ray  = using("Screenlab.Raycast")
+local engine = using("ScreenlabCore")
+local Graphics = using("Screenlab.Drivers.Graphics")
+local GlobalEvents = using("Screenlab.GlobalEvent")
 
 local function rotateVector2(vector, angle)
 	local cosAngle = math.cos(angle)
@@ -86,6 +85,7 @@ end
 
 
 local function drawHitCorners(RenderLayer, hits, lightobj)
+	local Point    = Graphics.Delaunay.Point
 	for _,hit in ipairs(hits) do
 		local hitObject = hit.object
 		local cornersInShadow = hit.corners

@@ -181,7 +181,6 @@ local scene = engine:CreateScene(script.Name,function()
 
 	local Camera = require(game.ReplicatedStorage.ScreenLAB.Engine["Screenlab.Camera"])
 	Camera:SetScale(Vector2.new(1.5,1.5))
-
 	spawn(function()
 		while wait() do
 			if Input.UnifiedInput.Left.IsDown and not dead  and phys.Forces.Grounded then

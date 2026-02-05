@@ -1,3 +1,5 @@
+local using = require(script.Parent.Using)
+
 local module = {}
 
 local SimulatedObjects = {}
@@ -5,9 +7,9 @@ module.Gravity = 9.8
 module.TerminalVelocity = 50
 module.SimulationSteps = 2
 
-local GlobalEvent = require(script.Parent["Screenlab.GlobalEvent"])
+local GlobalEvent = using("Screenlab.GlobalEvent")
 local insert = game:GetService("GuiService"):GetGuiInset()
-local Camera = require(script.Parent["Screenlab.Camera"])
+local Camera = using("Screenlab.Camera")
 
 
 local PIXEL_TO_METER = 5
