@@ -18,7 +18,7 @@ Screenlab is a fully modular gui based 2D game engine built from scratch for Rob
 
 
 
-> ⚠️ **Note:** Screenlab is under active development. Some features may be incomplete, experimental, or subject to change without notice. GitHub repo does not include Roblox specific objects and does not work with just the code alone.
+> ⚠️ **Note:** Screenlab is under active development. Some features may be incomplete, experimental, or subject to change without notice. GitHub repo does not include Roblox specific objects due to roblox file sync only working wirh scripts and does not work with just the code alone.
 
 📚 Check out the full documentation [here](https://screenlab.gitbook.io/screenlab) to get started and explore all of Screenlab’s capabilities.
 
