@@ -429,6 +429,9 @@ function module:CreateScene(name, func)
 	return scene
 end
 
+function module:GetWorldSize()
+	return Vector2.new(1920,1080)
+end
 
 function module:GetScene(name)
 	return Scenes[name]
@@ -447,13 +450,13 @@ module.CreatePlayerUI = function()
 		tmpwindow.Name = "ScreenLabUI"
 		tmpwindow.IgnoreGuiInset = false
 		tmpwindow.ResetOnSpawn = false
-		local Base = Instance.new("Frame")
+		local Base = Instance.new("Frame",tmpwindow)
 		Base.Name = "ScreenLabBase"
 		Base.BorderSizePixel = 0
-		Base.Size = UDim2.new(1,0,1,0)
+		local worldsize = module:GetWorldSize()
+		Base.Size = UDim2.fromOffset(worldsize.X,worldsize.Y)
 		Base.Transparency  = 1
 		Base.AnchorPoint = Vector2.new(0,0)
-		Base.Parent = tmpwindow
 		local core = Instance.new("Folder",Base)
 		core.Name = "Core"
 		local bg = Instance.new("Frame",tmpwindow)

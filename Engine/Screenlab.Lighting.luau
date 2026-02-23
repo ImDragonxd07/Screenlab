@@ -14,17 +14,14 @@ local engine = using("ScreenlabCore")
 local Graphics = using("Screenlab.Drivers.Graphics")
 local GlobalEvents = using("Screenlab.GlobalEvent")
 
-local function rotateVector2(vector, angle)
-	local cosAngle = math.cos(angle)
-	local sinAngle = math.sin(angle)
-
-	local x = vector.X * cosAngle - vector.Y * sinAngle
-	local y = vector.X * sinAngle + vector.Y * cosAngle
-
-	return Vector2.new(x, y)
+-- PRE COMPUTE SIN COS
+local COS, SIN = {}, {}
+for angle = 0, 359 do
+	COS[angle] = math.cos(math.rad(angle))
+	SIN[angle] = math.sin(math.rad(angle))
 end
 
-
+-- FUNCS
 local function cornerInShadow(corner, shadowCorners)
 	for _, shadowCorner in ipairs(shadowCorners) do
 		if corner == shadowCorner then
@@ -38,7 +35,7 @@ end
 local function castRays360(lightPosition, lightobj,intensity)
 	local hits = {}
 	for angle = 0, 359, module.Settings.RaycastStep do
-		local direction = rotateVector2(Vector2.new(1, 0), math.rad(angle))
+		local direction = Vector2.new(COS[angle], SIN[angle])
 		local rayHits = ray.Cast(lightobj.Position, direction, module.Settings.IgnoreLayer)
 
 		if #rayHits > 0 then
@@ -50,7 +47,7 @@ local function castRays360(lightPosition, lightobj,intensity)
 			local hitPosition = hit.AbsolutePosition
 			local Distance = (hitCenter - lightCenter).Magnitude
 			if(Distance > intensity) then
-				return hits
+				continue
 			end
 			local topLeft = hitPosition
 			local topRight = hitPosition + Vector2.new(hitSize.X, 0)
@@ -74,7 +71,7 @@ local function castRays360(lightPosition, lightobj,intensity)
 				cornersInShadow["topRight"] = true
 			elseif direction.X >= 0 and direction.Y >= 0 then
 				-- bottom right
-				cornersInShadow["botttomRight"] = true
+				cornersInShadow["bottomRight"] = true
 			end
 			table.insert(hits, { object = hitObject, corners = cornersInShadow, inside = lightInsideObject })
 		end
@@ -98,7 +95,6 @@ local function drawHitCorners(RenderLayer, hits, lightobj)
 		else
 			local hitPosition = hitObject.AbsolutePosition
 			local hitSize = hitObject.AbsoluteSize
-			local ssize = 10000
 			local objectCorners = {
 				topLeft = hitPosition,
 				topRight = hitPosition + Vector2.new(hitSize.X, 0),

@@ -180,6 +180,7 @@ local scene = engine:CreateScene(script.Name,function()
 	local movementspeed = 3
 
 	local Camera = require(game.ReplicatedStorage.ScreenLAB.Engine["Screenlab.Camera"])
+	Camera.ClampToScreen = true
 	Camera:SetScale(Vector2.new(1.5,1.5))
 	spawn(function()
 		while wait() do
@@ -195,7 +196,10 @@ local scene = engine:CreateScene(script.Name,function()
 			local x = plr.Position.X.Offset
 			local y = plr.Position.Y.Offset
 			local vp = workspace.CurrentCamera.ViewportSize
-			Camera:TweenCamera(-Vector2.new(math.clamp(x - (vp.X /2),0, (vp.X /2)),math.clamp(y - (vp.Y/2),0,(vp.Y/2))))
+			Camera:TweenCamera(-Vector2.new(
+				x - (vp.X / 2),
+				y - (vp.Y / 2)
+				))
 		end
 	end)
 
