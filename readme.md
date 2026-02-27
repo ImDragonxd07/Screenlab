@@ -21,16 +21,3 @@ To download, head over to the releases page and grab the latest stable RBXM file
 > ⚠️ **Note:** Screenlab is under active development. Some features may be incomplete, experimental, or subject to change without notice. GitHub repo does not include Roblox specific objects due to roblox file sync only working with scripts and does not work with just the code alone.
 
 📚 Check out the full documentation [here](https://screenlab.gitbook.io/screenlab) to get started and explore all of Screenlab’s capabilities.
-
----
-
-## License
-
-Screenlab is released under a custom license:
-
-- You **may modify and use** Screenlab for creating your own games.  
-- You **may monetize games** made with Screenlab.  
-- You **may not sell or redistribute** the Screenlab engine itself as your own.  
-- You **must give credit** to the project when using or modifying the engine.
-
-By using Screenlab, you agree to comply with these terms.
