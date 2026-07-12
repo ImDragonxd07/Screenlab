@@ -5,10 +5,10 @@
 <!-- STATS_START -->
 <div align="center">
 
-![Files](https://img.shields.io/badge/Files-50-blue?style=for-the-badge&logo=files)
-![Lines of Code](https://img.shields.io/badge/Lines_of_Code-12612-green?style=for-the-badge&logo=codelines)
-![Comments](https://img.shields.io/badge/Comments-4452-yellow?style=for-the-badge&logo=comment)
-![Last Updated](https://img.shields.io/badge/Last_Updated-February%2027,%202026-purple?style=for-the-badge&logo=calendar)
+![Files](https://img.shields.io/badge/Files-97-blue?style=for-the-badge&logo=files)
+![Lines of Code](https://img.shields.io/badge/Lines_of_Code-25224-green?style=for-the-badge&logo=codelines)
+![Comments](https://img.shields.io/badge/Comments-8866-yellow?style=for-the-badge&logo=comment)
+![Last Updated](https://img.shields.io/badge/Last_Updated-July%2012,%202026-purple?style=for-the-badge&logo=calendar)
 
 </div>
 <!-- STATS_END -->
