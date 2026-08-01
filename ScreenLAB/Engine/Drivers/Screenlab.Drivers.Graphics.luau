@@ -65,8 +65,9 @@ module.RenderLine = function(RenderLayer, p1,p2,thickness,color)
 end
 
 
-module.RenderPoly = function(RenderLayer,a, b, c, color)
+module.RenderPoly = function(RenderLayer,a, b, c, color, transparency)
 	if RenderLayer.Removing then return end
+	transparency = transparency or 1;
 	local key = tostring(a)..tostring(b)..tostring(c)
 	
 	
@@ -113,6 +114,7 @@ module.RenderPoly = function(RenderLayer,a, b, c, color)
 	w1.Rotation = theta
 	w1.BorderSizePixel = 0
 	w1.ImageColor3 = module.Settings.DbgPolys and Color3.new(1, 1, 1) or color
+	w1.ImageTransparency = transparency
 	w1.Parent = Engine.playerData.Tmp
 	
 		local borderThickness = 5
@@ -142,6 +144,7 @@ module.RenderPoly = function(RenderLayer,a, b, c, color)
 	w2.Rotation = theta
 	w2.BorderSizePixel = 0
 	w2.ImageColor3 = module.Settings.DbgPolys and Color3.new(0, 0, 0) or color
+	w2.ImageTransparency = transparency
 	w2.Parent = Engine.playerData.Tmp
 	RenderLayer.Polys[key] = {w1, w2}
 

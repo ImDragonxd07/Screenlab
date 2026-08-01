@@ -5,64 +5,13 @@ local Hooking = using("Screenlab.Hooking")
 local Types = using("Screenlab.Types")
 local GlobalEvents = using("Screenlab.GlobalEvent")
 local Time = using("Screenlab.Time")
-
-local ErrCodes = {
-	ERR_INVALID_PLAYER = "ERR_INVALID_PLAYER",
-	ERR_CREATE_WINDOW = "ERR_CREATE_WINDOW",
-	ERR_NON_REGISTERED_PLAYER = "ERR_NON_REGISTERED_PLAYER",
-	ERR_GET_WINDOW = "ERR_GET_WINDOW",
-	ERR_COMPONENT_NOT_FOUND = "ERR_COMPONENT_NOT_FOUND",
-	ERR_MAX_COMPONENT_TYPE_REACHED = "ERR_MAX_COMPONENT_TYPE_REACHED",
-	ERR_NO_SCENEBUNDLE_NAME = "ERR_NO_SCENEBUNDLE_NAME",
-	ERR_BUNDLE_ALREADY_EXISTS = "ERR_BUNDLE_ALREADY_EXISTS",
-	ERR_INVALID_SPACE = "ERR_INVALID_SPACE"
-}
+local CrashHandler =  using("Screenlab.CrashHandler")
 
 -- SCREENLAB INTERNAL
 local VERSION = "1.1 BETA"
 local LOADED = false
 local function GetPlayerScreenGUI(Player)
 	return Player:WaitForChild('PlayerGui')
-end
-
-local function err(code)
-	local targetScript, originLevel
-	local baselevel = 2
-	pcall(function()
-		local level = baselevel
-		while level < 100 do
-			local success, env = pcall(getfenv, level)
-			if not success or not env then break end
-
-			if typeof(env.script) == "Instance" and env.script ~= script then
-				targetScript = env.script
-				originLevel = level
-				break
-			end
-
-			level += 1
-		end
-	end)
-	local traceback = debug.traceback()
-	local errorIndex = tostring(table.find(ErrCodes, code) or "Unknown")
-	local lines = {
-		"\n",
-		"╔══════════════════════════════════════════════╗",
-		"            🛠️  SCREENLAB ERROR REPORTER       ",
-		"╚══════════════════════════════════════════════╝",
-		" • Time           : " .. os.date("%Y-%m-%d %H:%M:%S"),
-		" • Error Name     : " .. tostring(code),
-		" • Error Code #   : " .. errorIndex,
-		" • Origin Script  : " .. (targetScript and targetScript:GetFullName() or "Unknown"),
-		" • Stack Level    : " .. tostring(originLevel or "N/A") .. " (+"..baselevel..")", --+2 because we ignore first 2 layers as they would just be this function but still show this for debugging reasons
-		"════════════════════ TRACEBACK ════════════════════",
-		traceback,
-		"═══════════════════════════════════════════════════",
-		"All errors are treated as non fatal",
-		"\n"
-	} 
-	warn(table.concat(lines, "\n"))
-	return code
 end
 
 			   
@@ -331,7 +280,32 @@ module.RegisterPlayer = function (Player)
 	if LOADED then return end
 	
 	if not table.find(game.Players:GetChildren(),Player) then
-		return err(ErrCodes.ERR_INVALID_PLAYER)
+		CrashHandler.Report({
+			Source = "Engine",
+
+			System = script.Name,
+
+			Category = "Runtime",
+
+			Severity = "Fatal",
+
+			Fatal = true,
+
+			Message = "ERR_INVALID_PLAYER",
+
+			Context = {
+				Function = "RegisterPlayer"
+			},
+
+			Traceback = debug.traceback(),
+
+			Callstack = string.split(
+				debug.traceback(),
+				"\n"
+			)
+		})
+
+		return false
 	else
 		module.playerData.PlayerInstance = Player
 		local screengui = GetPlayerScreenGUI(module.playerData.PlayerInstance)
@@ -369,7 +343,32 @@ module.RegisterPlayer = function (Player)
 end
 module.LockPlayer = function()
 	if not module.playerData.PlayerInstance then
-		return err(ErrCodes.ERR_NON_REGISTERED_PLAYER)
+		CrashHandler.Report({
+			Source = "Engine",
+
+			System = script.Name,
+
+			Category = "Runtime",
+
+			Severity = "Fatal",
+
+			Fatal = true,
+
+			Message = "ERR_NON_REGISTERED_PLAYER",
+
+			Context = {
+				Function = "LockPlayer"
+			},
+
+			Traceback = debug.traceback(),
+
+			Callstack = string.split(
+				debug.traceback(),
+				"\n"
+			)
+		})
+
+		return false
 	else
 		module.playerData.PlayerInstance.CharacterAdded:Connect(function()
 			local Character = module.playerData.PlayerInstance.Character or module.playerData.PlayerInstance.CharacterAdded:Wait()
@@ -384,49 +383,104 @@ end
 local Scenes = {}
 
 function module:CreateScene(name, func)
+
 	local scene = {}
 	local SceneSprites = {}
 	local SavedValues = {}
+
 	scene.Name = name
 	scene.Code = func
 
+
 	function scene:Load()
+
 		local originalSpriteNew = module.Sprite.new
+
 		module.Sprite.new = function(...)
 			local sprite = originalSpriteNew(...)
 			table.insert(SceneSprites, sprite)
 			return sprite
 		end
-		local success, sceneerror = pcall(scene.Code, scene)
-		if not success then
-			warn("Error loading scene:", sceneerror)
-			err("Unknown")
-		end
+
+
+		local success, sceneerror = xpcall(
+			function()
+				scene.Code(scene)
+			end,
+			debug.traceback
+		)
+
+
+		-- Always restore original function
 		module.Sprite.new = originalSpriteNew
+
+
+		if not success then
+
+			CrashHandler.Report(
+				{
+					System = "Scene: " .. scene.Name,
+
+					Severity = "User Error",
+
+					Fatal = false,
+
+					Message = sceneerror,
+
+					Traceback = debug.traceback(),
+
+					Callstack = string.split(
+						debug.traceback(),
+						"\n"
+					)
+				},
+				GetPlayerScreenGUI(module.playerData.PlayerInstance)
+			)
+
+			return false
+		end
+
+
+		return true
 	end
 
+
 	function scene:Unload()
+
 		for _, sprite in ipairs(SceneSprites) do
 			sprite:Destroy()
 		end
+
 		table.clear(SceneSprites)
+
 	end
 
+
 	function scene:Destroy()
+
 		scene:Unload()
+
 		Scenes[name] = nil
+
 		for k in pairs(scene) do
 			scene[k] = nil
 		end
+
 	end
+
 
 	function scene:Reload()
+
 		scene:Unload()
 		scene:Load()
+
 	end
 
+
 	Scenes[name] = scene
+
 	return scene
+
 end
 
 function module:GetWorldSize()
@@ -444,7 +498,32 @@ end
 module.CreatePlayerUI = function()
 	if LOADED then return end
 	if not module.playerData.PlayerInstance then
-		return err(ErrCodes.ERR_NON_REGISTERED_PLAYER)
+		CrashHandler.Report({
+			Source = "Engine",
+
+			System = script.Name,
+
+			Category = "Runtime",
+
+			Severity = "Fatal",
+
+			Fatal = true,
+
+			Message = "ERR_NON_REGISTERED_PLAYER",
+
+			Context = {
+				Function = "CreatePlayerUI"
+			},
+
+			Traceback = debug.traceback(),
+
+			Callstack = string.split(
+				debug.traceback(),
+				"\n"
+			)
+		})
+
+		return false
 	else
 		local tmpwindow = Instance.new("ScreenGui")
 		tmpwindow.Name = "ScreenLabUI"
@@ -479,7 +558,32 @@ module.CreatePlayerUI = function()
 		module.playerData.CameraSpace = CameraSpace
 		local tmpparent = GetPlayerScreenGUI(module.playerData.PlayerInstance)
 		if not tmpparent then
-			return err(ErrCodes.ERR_CREATE_WINDOW)
+			CrashHandler.Report({
+				Source = "Engine",
+
+				System = script.Name,
+
+				Category = "Runtime",
+
+				Severity = "Fatal",
+
+				Fatal = true,
+
+				Message = "ERR_CREATE_WINDOW",
+
+				Context = {
+					Function = "CreatePlayerUI"
+				},
+
+				Traceback = debug.traceback(),
+
+				Callstack = string.split(
+					debug.traceback(),
+					"\n"
+				)
+			})
+
+			return false
 		else
 			tmpwindow.Parent = tmpparent
 			module.playerData.ScreenLabWindow = Base
@@ -491,12 +595,43 @@ end
 
 local function INIT()
 	if not LOADED then
-		module.RegisterPlayer(game.Players.LocalPlayer)
-		module.LockPlayer()
-		module.CreatePlayerUI()
-		GlobalEvents.Events.GameStarted:Fire()
-		LOADED = true
+		local success, errorMessage = xpcall(
+			function()
+
+				module.RegisterPlayer(game.Players.LocalPlayer)
+				module.LockPlayer()
+				module.CreatePlayerUI()
+				CrashHandler.SetScreenGui(GetPlayerScreenGUI(module.playerData.PlayerInstance))
+				GlobalEvents.Events.GameStarted:Fire()
+				LOADED = true
+
+			end,
+			debug.traceback
+		)
+		if not success then
+			CrashHandler.Report(
+				{
+					System = "ScreenLab Runtime Init",
+
+					Severity = "Fatal",
+
+					Fatal = true,
+
+					Message = errorMessage:match("^[^\n]+") or errorMessage,
+
+					Traceback = errorMessage,
+
+					Callstack = string.split(
+						errorMessage,
+						"\n"
+					)
+				}
+			)
+			return false
+		end
 	end
+
+	return true
 end
 
 
